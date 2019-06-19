@@ -1,55 +1,50 @@
-# Snake Game
-# Chapter 11
-
 import sys, time, random, math, pygame
 from pygame.locals import *
 from MyLibrary import *
 
 
-class Food(MySprite):
+class Food(MySprite):   #食物类
     def __init__(self):
         MySprite.__init__(self)
-        image = pygame.Surface((16,16)).convert_alpha()
+        image = pygame.Surface((32,32)).convert_alpha()
         image.fill((255,255,255,0))
-        pygame.draw.circle(image, (250,250,50), (8,8), 8, 0)
+        pygame.draw.circle(image, (150,0,0), (16,16), 16, 0)
         self.set_image(image)
-        MySprite.update(self, 0, 30) #create frame image
-        self.X = random.randint(0,23) * 16
-        self.Y = random.randint(0,17) * 16 
+        MySprite.update(self, 0, 30) 
+        self.X = random.randint(0,23) * 32
+        self.Y = random.randint(0,17) * 32            #食物位置随机生成
         
-class SnakeSegment(MySprite):
-    def __init__(self):
-        colors = ((242,252,202),(62,190,155),(237,228,47),(255,139,89),(252,76,76))
+class SnakeSegment(MySprite):          #画蛇方法，一个个的圆形，draw.circle
+    def __init__(self,color=(50,50,50)):
         MySprite.__init__(self)
-        image = pygame.Surface((16,16)).convert_alpha()
+        image = pygame.Surface((32,32)).convert_alpha()
         image.fill((255,255,255,0))
-        pygame.draw.circle(image, random.choice(colors), (8,8), 8, 0)
+        pygame.draw.circle(image, color, (16,16), 16 ,0)
         self.set_image(image)
-        MySprite.update(self, 0, 30) #create frame image
+        MySprite.update(self, 0, 30) 
 
 class Snake():
     def __init__(self):
         self.velocity = Point(-1,0)
         self.old_time = 0
-        head = SnakeSegment()
-        head.X = 12*16
-        head.Y = 9*16
-        self.segments = list()
+        head = SnakeSegment((200,100,0))   #画蛇
+        head.X = 12*32
+        head.Y = 9*32
+        self.segments = list()           #放入列表
         self.segments.append(head)
-        self.add_segment()
+        self.add_segment()               #添加蛇头
         self.add_segment()
 
     def update(self,ticks):
-        global step_time #additional code
-        if ticks > self.old_time + step_time: #modified code
+        if ticks > self.old_time + step_time:
             self.old_time = ticks
-            #move body segments
+            #移动身体（改变位置）
             for n in range(len(self.segments)-1, 0, -1):
                 self.segments[n].X = self.segments[n-1].X
                 self.segments[n].Y = self.segments[n-1].Y
-            #move snake head
-            self.segments[0].X += self.velocity.x * 16
-            self.segments[0].Y += self.velocity.y * 16
+            #移动蛇头
+            self.segments[0].X += self.velocity.x * 32
+            self.segments[0].Y += self.velocity.y * 32
 
     def draw(self,surface):
         for segment in self.segments: 
@@ -59,83 +54,57 @@ class Snake():
         last = len(self.segments)-1
         segment = SnakeSegment()
         start = Point(0,0)
-        if self.velocity.x < 0: start.x = 16
-        elif self.velocity.x > 0: start.x = -16
-        if self.velocity.y < 0: start.y = 16
-        elif self.velocity.y > 0: start.y = -16
+        if self.velocity.x < 0:
+            start.x = 32
+        elif self.velocity.x > 0:
+            start.x = -32
+        if self.velocity.y < 0:
+            start.y = 32
+        elif self.velocity.y > 0:
+            start.y = -32
         segment.X = self.segments[last].X + start.x
         segment.Y = self.segments[last].Y + start.y
         self.segments.append(segment)
 
 
-#this function gets the snake's current direction
 def get_current_direction():
-    global head_x,head_y
-    first_segment_x = snake.segments[1].X//16
-    first_segment_y = snake.segments[1].Y//16
-    if head_x-1 == first_segment_x:   return "right"
-    elif head_x+1 == first_segment_x: return "left"
-    elif head_y-1 == first_segment_y: return "down"
-    elif head_y+1 == first_segment_y: return "up"
+    global head_x,head_y     #蛇头位置设置为全局变量
+    first_segment_x = snake.segments[1].X//32
+    first_segment_y = snake.segments[1].Y//32
+    
         
 
-#this function gets the direction to the food
-def get_food_direction():
-    global head_x,head_y
+
+def get_food_direction():    #吃到食物时，身长增加
+    global head_x,head_y     #蛇头位置设置为全局变量
     food = Point(0,0)
     for obj in food_group:
-        food = Point(obj.X//16,obj.Y//16)
-    if head_x < food.x:       return "right"
-    elif head_x > food.x:     return "left"
-    elif head_x == food.x:
-        if head_y < food.y:   return "down"
-        elif head_y > food.y: return "up"
+        food = Point(obj.X//32,obj.Y//32)
 
-#this function causes snake to move automatically
-def auto_move():
-    direction = get_current_direction()
-    food_dir = get_food_direction()
-    if food_dir == "left":
-        if direction != "right":
-            direction = "left"
-    elif food_dir == "right":
-        if direction != "left":
-            direction = "right"
-    elif food_dir == "up":
-        if direction != "down":
-            direction = "up"
-    elif food_dir == "down":
-        if direction != "up":
-            direction = "down"
-
-    #set velocity based on direction
-    if direction == "up": snake.velocity = Point(0,-1)
-    elif direction == "down": snake.velocity = Point(0,1)
-    elif direction == "left": snake.velocity = Point(-1,0)
-    elif direction == "right": snake.velocity = Point(1,0)
+        
 
     
-#this function initializes the game
+
+    
+#初始化
 def game_init():
-    global screen, backbuffer, font, timer, snake, food_group
+    global screen, backbuffer, font, timer, snake, food_group  #设置全局变量
 
     pygame.init()
-    screen = pygame.display.set_mode((50*16,50*16))
+    screen = pygame.display.set_mode((24*32,18*32)) #分辨率适配
     pygame.display.set_caption("Snake Game")
     font = pygame.font.Font(None, 30)
     timer = pygame.time.Clock()
-
-    #create a drawing surface
     backbuffer = pygame.Surface((screen.get_rect().width,screen.get_rect().height))
 
-    #create snake
+    #画蛇
     snake = Snake()
     image = pygame.Surface((60,60)).convert_alpha()
     image.fill((255,255,255,0))
     pygame.draw.circle(image, (80,80,220,70), (30,30), 30, 0)
     pygame.draw.circle(image, (80,80,250,255), (30,30), 30, 4)
 
-    #create food
+    #挑战：添加食物
     food_group = pygame.sprite.Group()
     food = Food()
     food2 = Food()
@@ -143,24 +112,29 @@ def game_init():
     food_group.add(food, food2, food3)
 
 
-#main program begins
+
 game_init()
 game_over = False
 last_time = 0
 
-auto_play = False #additional code added
+auto_play = False #初始化时关闭自动
 step_time = 400
 
-#main loop
+#主程序
 while True:
     timer.tick(30)
     ticks = pygame.time.get_ticks()
 
     #event section
     for event in pygame.event.get():
-        if event.type == QUIT: sys.exit()
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        
     keys = pygame.key.get_pressed()
-    if keys[K_ESCAPE]: sys.exit()
+    if keys[K_ESCAPE]:
+        pygame.quit()
+        sys.exit()
     elif keys[K_UP] or keys[K_w]:
         snake.velocity = Point(0,-1)
     elif keys[K_DOWN] or keys[K_s]:
@@ -169,57 +143,57 @@ while True:
         snake.velocity = Point(-1,0)
     elif keys[K_RIGHT] or keys[K_d]:
         snake.velocity = Point(1,0)
-    elif keys[K_SPACE]: #additional code added
-        if auto_play:
-            auto_play = False
-            step_time = 400
-        else:
-            auto_play = True
-            step_time = 100
+    elif keys[K_SPACE]:
+        step_time -= 10
+    if game_over and keys[K_RETURN]:   #按回车重来
+        game_over=False
+        snake = Snake()
+        image = pygame.Surface((60,60)).convert_alpha()
+        image.fill((255,255,255,0))
+        pygame.draw.circle(image, (80,80,220,70), (30,30), 30, 0)
+        pygame.draw.circle(image, (80,80,250,255), (30,30), 30, 4)
+        step_time = 400
 
-    #update section
+    
     if not game_over:
         snake.update(ticks)
         food_group.update(ticks)
         
-        #try to pick up food
+        
         hit_list = pygame.sprite.groupcollide(snake.segments, \
             food_group, False, True)
         if len(hit_list) > 0:
             food_group.add(Food())
             snake.add_segment()
 
-        #see if head collides with body
+        
         for n in range(1, len(snake.segments)):
             if pygame.sprite.collide_rect(snake.segments[0], snake.segments[n]):
                 game_over = True
 
-        #check screen boundary
-        head_x = snake.segments[0].X//16
-        head_y = snake.segments[0].Y//16
+        
+        head_x = snake.segments[0].X//32
+        head_y = snake.segments[0].Y//32
         if head_x < 0 or head_x > 24 or head_y < 0 or head_y > 18:
             game_over = True
+            
 
-        #additional code added
-        if auto_play: auto_move()
     
 
-    #drawing section
-    backbuffer.fill((20,50,20)) 
+    
+    backbuffer.fill((100,100,200)) 
     snake.draw(backbuffer)
     food_group.draw(backbuffer)
     screen.blit(backbuffer, (0,0))
 
     if not game_over:
         print_text(font, 0, 0, "Length " + str(len(snake.segments)))
-        print_text(font, 0, 20, "Position " + str(snake.segments[0].X//16) + \
-                   "," + str(snake.segments[0].Y//16))
+        print_text(font, 0, 20, "Position " + str(snake.segments[0].X//32) + \
+                   "," + str(snake.segments[0].Y//32))
     else:
         print_text(font, 0, 0, "GAME OVER")
+        print_text(font, 0, 20, "Please press the 'return' button to continue")
 
-    #additional code added
-    if auto_play: 
-        print_text(font, 700, 0, "AUTO")
         
    
     pygame.display.update() 
